@@ -165,3 +165,10 @@ dist
 .env*
 !.env.example
 .wrangler/
+
+# claude
+.claude/
+
+# playwright mcp
+.playwright-mcp/
+
