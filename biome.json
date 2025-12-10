@@ -11,7 +11,9 @@
 			"**",
 			"!worker-configuration.d.ts",
 			"!src/gql/graphql-env.d.ts",
-			"!src/gql/schema.gql"
+			"!src/gql/schema.gql",
+			"!src/cloudflare/gql/graphql-env.d.ts",
+			"!src/cloudflare/gql/schema.gql"
 		]
 	},
 	"formatter": {

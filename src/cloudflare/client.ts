@@ -2379,22 +2379,11 @@ export class CloudflareMetricsClient {
 // Singleton factory
 // =============================================================================
 
-let cachedClient: CloudflareMetricsClient | null = null;
-let cachedEnvHash: string | null = null;
+const clientCache = new WeakMap<RateLimiter, CloudflareMetricsClient>();
 
 type RateLimiter = {
 	limit: (opts: { key: string }) => Promise<{ success: boolean }>;
 };
-
-/**
- * Generates hash from environment for client caching.
- *
- * @param env Environment variables.
- * @returns Hash string (API token).
- */
-function envHash(env: Env): string {
-	return env.CLOUDFLARE_API_TOKEN;
-}
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 250;
@@ -2433,16 +2422,16 @@ function createRateLimitedFetch(
 }
 
 /**
- * Gets or creates singleton CloudflareMetricsClient with rate limiting and env-based caching.
+ * Gets or creates singleton CloudflareMetricsClient with rate limiting.
+ * Uses WeakMap keyed on rate limiter for automatic GC when env is released.
  *
  * @param env Environment variables.
  * @returns CloudflareMetricsClient singleton instance.
  */
 export function getCloudflareMetricsClient(env: Env): CloudflareMetricsClient {
-	const currentHash = envHash(env);
-
-	if (cachedClient && cachedEnvHash === currentHash) {
-		return cachedClient;
+	const existing = clientCache.get(env.CF_API_RATE_LIMITER);
+	if (existing) {
+		return existing;
 	}
 
 	const loggerConfig = configFromEnv(env);
@@ -2459,7 +2448,7 @@ export function getCloudflareMetricsClient(env: Env): CloudflareMetricsClient {
 		logger,
 	);
 
-	cachedClient = new CloudflareMetricsClient({
+	const client = new CloudflareMetricsClient({
 		apiToken: env.CLOUDFLARE_API_TOKEN,
 		scrapeDelaySeconds: env.SCRAPE_DELAY_SECONDS,
 		timeWindowSeconds: env.TIME_WINDOW_SECONDS,
@@ -2468,6 +2457,6 @@ export function getCloudflareMetricsClient(env: Env): CloudflareMetricsClient {
 		fetch: rateLimitedFetch,
 	});
 
-	cachedEnvHash = currentHash;
-	return cachedClient;
+	clientCache.set(env.CF_API_RATE_LIMITER, client);
+	return client;
 }
