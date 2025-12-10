@@ -399,7 +399,7 @@ For mixed accounts (enterprise + free zones), only free zones are skipped—paid
 │Prometheus│────────────────▶│ Worker │
 │  Server  │                 │ .fetch │
 └──────────┘                 └───┬────┘
-                                │
+                                 │
           ┌──────────────────────┴──────────────────────┐
           │            MetricCoordinator                │
           │                                             │
@@ -407,7 +407,7 @@ For mixed accounts (enterprise + free zones), only free zones are skipped—paid
           │  2. If stale → getAccounts()                │
           │  3. Fan out to AccountMetricCoordinators    │
           └─────────────────────┬───────────────────────┘
-                               │
+                                │
        ┌────────────────────────┼────────────────────────┐
        │                        │                        │
        ▼                        ▼                        ▼
