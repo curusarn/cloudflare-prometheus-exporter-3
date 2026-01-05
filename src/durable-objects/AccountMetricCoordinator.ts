@@ -14,7 +14,7 @@ import { createLogger, type Logger } from "../lib/logger";
 import type { MetricDefinition } from "../lib/metrics";
 import { getConfig, type ResolvedConfig } from "../lib/runtime-config";
 import { getTimeRange } from "../lib/time";
-import type { Zone } from "../lib/types";
+import { toMinimalZone, type Zone } from "../lib/types";
 import { MetricExporter } from "./MetricExporter";
 
 const STATE_KEY = "state";
@@ -240,6 +240,9 @@ export class AccountMetricCoordinator extends DurableObject<Env> {
 				)
 			: ACCOUNT_SCOPED_QUERIES;
 
+		// Convert to minimal zones to reduce storage size in exporters
+		const minimalZones = zones.map(toMinimalZone);
+
 		// Push zone context to account-scoped exporters AND initialize zone-scoped exporters concurrently
 		await Promise.all([
 			// Account-scoped exporters
@@ -252,7 +255,7 @@ export class AccountMetricCoordinator extends DurableObject<Env> {
 					await exporter.updateZoneContext(
 						state.accountId,
 						state.accountName,
-						zones,
+						minimalZones,
 						firewallRules,
 						timeRange,
 					);

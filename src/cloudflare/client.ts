@@ -15,10 +15,17 @@ import type {
 	Account,
 	LoadBalancerPool,
 	LoadBalancerWithPools,
+	MinimalZone,
 	SSLCertificate,
 	TimeRange,
 	Zone,
 } from "../lib/types";
+
+/**
+ * Minimal zone interface for label resolution in GraphQL queries.
+ * Both Zone and MinimalZone satisfy this interface.
+ */
+type ZoneForLabels = { id: string; name: string };
 import { LoadBalancerPoolSchema } from "../lib/types";
 import {
 	AdaptiveMetricsQuery,
@@ -760,7 +767,7 @@ export class CloudflareMetricsClient {
 	 *
 	 * @param query Zone-level query name.
 	 * @param zoneIds Array of Cloudflare zone IDs.
-	 * @param zones Zone metadata for label mapping.
+	 * @param zones Zone metadata for label mapping (MinimalZone or Zone).
 	 * @param firewallRules Map of firewall rule IDs to names.
 	 * @param timeRange Shared time range for query alignment.
 	 * @returns Promise of metric definitions for the zones.
@@ -769,7 +776,7 @@ export class CloudflareMetricsClient {
 	async getZoneMetrics(
 		query: ZoneLevelQuery,
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		firewallRules: Record<string, string>,
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
@@ -807,9 +814,11 @@ export class CloudflareMetricsClient {
 			case "cache-miss-metrics":
 				return this.getCacheMissMetrics(zoneIds, zones, timeRange);
 			case "ssl-certificates":
-				return this.getSSLCertificateMetrics(zones);
+				// Zone-scoped: handled via getSSLCertificateMetricsForZone, not this method
+				throw new Error("ssl-certificates should use zone-scoped exporter");
 			case "lb-weight-metrics":
-				return this.getLbWeightMetrics(zones);
+				// Zone-scoped: handled via getLbWeightMetricsForZone, not this method
+				throw new Error("lb-weight-metrics should use zone-scoped exporter");
 			default: {
 				const _exhaustive: never = query;
 				throw new Error(`Unknown zone metric query: ${_exhaustive}`);
@@ -830,7 +839,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getHttpMetricsHandler(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		firewallRules: Map<string, string>,
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
@@ -1273,7 +1282,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getAdaptiveMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(AdaptiveMetricsQuery, {
@@ -1379,7 +1388,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getEdgeCountryMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(EdgeCountryMetricsQuery, {
@@ -1467,7 +1476,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getColoMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(ColoMetricsQuery, {
@@ -1543,7 +1552,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getColoErrorMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(ColoErrorMetricsQuery, {
@@ -1620,7 +1629,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getRequestMethodMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(RequestMethodMetricsQuery, {
@@ -1671,7 +1680,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getHealthCheckMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(HealthCheckMetricsQuery, {
@@ -1817,7 +1826,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getLoadBalancerMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(LoadBalancerMetricsQuery, {
@@ -1964,7 +1973,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getLogpushZoneMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(LogpushZoneMetricsQuery, {
@@ -2017,7 +2026,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getOriginStatusMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(OriginStatusMetricsQuery, {
@@ -2074,7 +2083,7 @@ export class CloudflareMetricsClient {
 	 */
 	private async getCacheMissMetrics(
 		zoneIds: string[],
-		zones: Zone[],
+		zones: ZoneForLabels[],
 		timeRange: TimeRange,
 	): Promise<MetricDefinition[]> {
 		const result = await this.gql.query(CacheMissMetricsQuery, {

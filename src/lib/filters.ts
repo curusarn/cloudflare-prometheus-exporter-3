@@ -1,4 +1,9 @@
-import type { Account, Zone } from "./types";
+import type { Account, MinimalZone, Zone } from "./types";
+
+/**
+ * Common zone interface for functions that only need id and name.
+ */
+type ZoneWithName = { id: string; name: string };
 
 /**
  * Parses comma-separated string into Set, trimming whitespace.
@@ -48,12 +53,13 @@ export function filterZonesByIds(
 
 /**
  * Looks up zone name by ID, falling back to ID if not found.
+ * Works with both Zone and MinimalZone arrays.
  *
  * @param zoneId Zone ID to look up.
  * @param zones Array of zones to search.
  * @returns Zone name if found, otherwise the zone ID.
  */
-export function findZoneName(zoneId: string, zones: Zone[]): string {
+export function findZoneName(zoneId: string, zones: ZoneWithName[]): string {
 	return zones.find((z) => z.id === zoneId)?.name ?? zoneId;
 }
 
@@ -64,7 +70,17 @@ export function findZoneName(zoneId: string, zones: Zone[]): string {
 export const FREE_PLAN_ID = "0feeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
 /**
- * Check if zone is on Free tier.
+ * Check if MinimalZone is on Free tier.
+ *
+ * @param zone MinimalZone to check.
+ * @returns True if zone is on Free tier.
+ */
+export function isFreeTierMinimalZone(zone: MinimalZone): boolean {
+	return zone.planId === FREE_PLAN_ID;
+}
+
+/**
+ * Check if full Zone is on Free tier.
  *
  * @param zone Zone to check.
  * @returns True if zone is on Free tier.
@@ -74,19 +90,19 @@ export function isFreeTierZone(zone: Zone): boolean {
 }
 
 /**
- * Partition zones into paid and free tier.
+ * Partition MinimalZones into paid and free tier.
  *
- * @param zones Array of zones to partition.
+ * @param zones Array of MinimalZones to partition.
  * @returns Object with paid and free zone arrays.
  */
-export function partitionZonesByTier(zones: Zone[]): {
-	paid: Zone[];
-	free: Zone[];
+export function partitionZonesByTier(zones: MinimalZone[]): {
+	paid: MinimalZone[];
+	free: MinimalZone[];
 } {
-	const paid: Zone[] = [];
-	const free: Zone[] = [];
+	const paid: MinimalZone[] = [];
+	const free: MinimalZone[] = [];
 	for (const zone of zones) {
-		if (isFreeTierZone(zone)) {
+		if (isFreeTierMinimalZone(zone)) {
 			free.push(zone);
 		} else {
 			paid.push(zone);

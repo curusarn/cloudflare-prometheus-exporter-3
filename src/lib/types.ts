@@ -116,6 +116,27 @@ export const ZoneSchema = z
 export type Zone = z.infer<typeof ZoneSchema>;
 
 /**
+ * Minimal zone data for MetricExporter state storage.
+ * Reduces state size to avoid SQLITE_TOOBIG errors in Durable Objects.
+ */
+export type MinimalZone = {
+	id: string;
+	name: string;
+	planId: string;
+};
+
+/**
+ * Convert full Zone to MinimalZone for storage efficiency.
+ */
+export function toMinimalZone(zone: Zone): MinimalZone {
+	return {
+		id: zone.id,
+		name: zone.name,
+		planId: zone.plan.id,
+	};
+}
+
+/**
  * Zod schema for Cloudflare SSL certificate API response.
  */
 export const SSLCertificateSchema = z

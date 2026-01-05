@@ -14,6 +14,7 @@ import {
 	type CounterState,
 	MetricExporterIdSchema,
 	type MetricExporterIdString,
+	type MinimalZone,
 	type TimeRange,
 	type Zone,
 } from "../lib/types";
@@ -34,7 +35,7 @@ type MetricExporterState = {
 	// Context for fetching (account-scoped)
 	accountId: string;
 	accountName: string;
-	zones: Zone[];
+	zones: MinimalZone[];
 	firewallRules: Record<string, string>;
 
 	// Context for fetching (zone-scoped)
@@ -159,7 +160,7 @@ export class MetricExporter extends DurableObject<Env> {
 	async updateZoneContext(
 		accountId: string,
 		accountName: string,
-		zones: Zone[],
+		zones: MinimalZone[],
 		firewallRules: Record<string, string>,
 		timeRange: TimeRange,
 	): Promise<void> {
