@@ -490,9 +490,15 @@ export class MetricExporter extends DurableObject<Env> {
 
 		// Exporter health metrics
 		// lastRefresh is stored as Date.now() (milliseconds), convert to seconds
-		// Handle edge case of very old state that might be 0
-		const lastRefreshSeconds =
-			state.lastRefresh > 0 ? Math.floor(state.lastRefresh / 1000) : 0;
+		// Handle legacy state that might have stored seconds instead of milliseconds
+		// (13+ digit values are milliseconds, 10 digit values are already seconds)
+		let lastRefreshSeconds = 0;
+		if (state.lastRefresh > 0) {
+			lastRefreshSeconds =
+				state.lastRefresh > 1_000_000_000_000
+					? Math.floor(state.lastRefresh / 1000) // milliseconds -> seconds
+					: state.lastRefresh; // already seconds
+		}
 
 		const lastScrapeTimestamp: MetricDefinition = {
 			name: "cloudflare_exporter_last_scrape_timestamp_seconds",
