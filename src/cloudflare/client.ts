@@ -851,13 +851,13 @@ export class CloudflareMetricsClient {
 			result = await this.gql.query(HTTPMetricsQueryNoBots, queryVars);
 		}
 
-		// Safety net: free tier zones should be filtered upstream, but handle gracefully
+		// Free tier zones lack GraphQL analytics access - throw to make failure visible
 		if (result.error?.message.includes("does not have access to the path")) {
-			this.logger.error(
-				"Zone(s) lack GraphQL analytics access - ensure free tier zones are filtered",
-				{ error: result.error.message },
+			throw new GraphQLError(
+				`Zone(s) lack GraphQL analytics access - ensure free tier zones are filtered: ${result.error.message}`,
+				result.error.graphQLErrors ?? [],
+				{ context: { zone_ids: zoneIds } },
 			);
-			return [];
 		}
 
 		if (result.error) {

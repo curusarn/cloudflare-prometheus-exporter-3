@@ -339,7 +339,13 @@ export class MetricExporter extends DurableObject<Env> {
 			});
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : String(error);
-			logger.error("Refresh failed", { error: msg });
+			logger.error("Refresh failed", {
+				error: msg,
+				query: state.queryName,
+				scope_type: state.scopeType,
+				scope_id: state.scopeId,
+				zone_count: state.zones.length,
+			});
 			this.state = { ...state, lastError: msg };
 			await this.ctx.storage.put(STATE_KEY, this.state);
 		}
