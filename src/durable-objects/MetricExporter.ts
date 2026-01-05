@@ -462,13 +462,51 @@ export class MetricExporter extends DurableObject<Env> {
 	}
 
 	/**
-	 * Return cached accumulated metrics.
+	 * Return cached accumulated metrics plus exporter health metrics.
 	 *
-	 * @returns Current snapshot of metrics with accumulated counter values.
+	 * @returns Current snapshot of metrics with accumulated counter values and health indicators.
 	 */
 	async export(): Promise<MetricDefinition[]> {
 		const state = this.getState();
-		return state.metrics;
+
+		// Build labels for exporter health metrics
+		const healthLabels: Record<string, string> = {
+			scope_type: state.scopeType,
+			scope_id: state.scopeId,
+			query: state.queryName,
+		};
+
+		// Add zone name if available
+		if (state.scopeType === "zone" && state.zoneMetadata) {
+			healthLabels.zone = state.zoneMetadata.name;
+		}
+
+		// Exporter health metrics
+		const lastScrapeTimestamp: MetricDefinition = {
+			name: "cloudflare_exporter_last_scrape_timestamp_seconds",
+			help: "Unix timestamp of last successful metric scrape",
+			type: "gauge",
+			values: [
+				{
+					labels: healthLabels,
+					value: state.lastRefresh > 0 ? state.lastRefresh / 1000 : 0,
+				},
+			],
+		};
+
+		const exporterUp: MetricDefinition = {
+			name: "cloudflare_exporter_up",
+			help: "Whether the exporter is healthy (1) or has errors (0)",
+			type: "gauge",
+			values: [
+				{
+					labels: healthLabels,
+					value: state.lastError === null ? 1 : 0,
+				},
+			],
+		};
+
+		return [...state.metrics, lastScrapeTimestamp, exporterUp];
 	}
 
 	/**

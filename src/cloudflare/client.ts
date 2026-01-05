@@ -495,8 +495,11 @@ export class CloudflareMetricsClient {
 		});
 
 		if (result.error) {
-			this.logger.error("GraphQL error", { error: result.error.message });
-			return [];
+			throw new GraphQLError(
+				`Worker totals query failed: ${result.error.message}`,
+				result.error.graphQLErrors ?? [],
+				{ context: { account_id: accountId } },
+			);
 		}
 
 		const metrics: MetricDefinition[] = [];
@@ -605,8 +608,11 @@ export class CloudflareMetricsClient {
 		});
 
 		if (result.error) {
-			this.logger.error("GraphQL error", { error: result.error.message });
-			return [];
+			throw new GraphQLError(
+				`Logpush account query failed: ${result.error.message}`,
+				result.error.graphQLErrors ?? [],
+				{ context: { account_id: accountId } },
+			);
 		}
 
 		const metric: MetricDefinition = {
@@ -654,8 +660,11 @@ export class CloudflareMetricsClient {
 		});
 
 		if (result.error) {
-			this.logger.error("GraphQL error", { error: result.error.message });
-			return [];
+			throw new GraphQLError(
+				`Magic transit query failed: ${result.error.message}`,
+				result.error.graphQLErrors ?? [],
+				{ context: { account_id: accountId } },
+			);
 		}
 
 		const activeTunnels: MetricDefinition = {
